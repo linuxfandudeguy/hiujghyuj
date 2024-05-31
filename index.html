@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Search Engine</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-5">Star Search Engine</h1>
+    <div class="form-group mt-4">
+      <label for="starName">Enter Star Name:</label>
+      <input type="text" class="form-control" id="starName" placeholder="Enter star name">
+    </div>
+    <button class="btn btn-primary mt-2" onclick="searchStar()">Search</button>
+    <div class="mt-4" id="starInfo"></div>
+  </div>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    function searchStar() {
+      var name = document.getElementById('starName').value;
+      var encodedName = encodeURIComponent(name);
+      $.ajax({
+        method: 'GET',
+        url: 'https://api.api-ninjas.com/v1/stars?name=' + encodedName,
+        headers: { 'X-Api-Key': 'jtci8rOBmaxHp0/eSBDx3A==tGlVzjfUOQbeJTJc'},
+        contentType: 'application/json',
+        success: function(result) {
+          if (result && result.length > 0) {
+            fetchWikipediaImage(encodedName);
+            displayStarInfo(result[0]);
+          } else {
+            displayError("No star found with that name.");
+          }
+        },
+        error: function ajaxError(jqXHR) {
+          console.error('Error: ', jqXHR.responseText);
+          displayError("Error: " + jqXHR.responseText);
+        }
+      });
+    }
+
+    function fetchWikipediaImage(starName) {
+      var encodedName = encodeURIComponent(starName);
+      var wikipediaAPIUrl = "https://en.wikipedia.org/w/api.php";
+      $.ajax({
+        method: 'GET',
+        url: wikipediaAPIUrl,
+        data: {
+          action: 'query',
+          format: 'json',
+          prop: 'pageimages',
+          piprop: 'original',
+          titles: encodedName,
+          origin: '*'
+        },
+        success: function(response) {
+          var pages = response.query.pages;
+          var pageId = Object.keys(pages)[0];
+          var imageUrl = pages[pageId].original.source;
+          displayImage(imageUrl);
+        },
+        error: function ajaxError(jqXHR) {
+          console.error('Error fetching Wikipedia image: ', jqXHR.responseText);
+          displayImageError();
+        }
+      });
+    }
+
+    function displayImage(imageUrl) {
+      // Display the image wherever you want in your HTML
+      var imageDiv = document.getElementById('starInfo');
+      imageDiv.innerHTML += '<img src="' + imageUrl + '" class="img-fluid mt-3" alt="Star Image" onerror="displayImageError()">';
+    }
+
+    function displayImageError() {
+      var imageDiv = document.getElementById('starInfo');
+      imageDiv.innerHTML += '<p class="text-danger mt-3">Sorry, we couldn\'t load the image.</p>';
+    }
+
+    function displayStarInfo(star) {
+      var starInfoDiv = document.getElementById('starInfo');
+      starInfoDiv.innerHTML = ''; // Clear previous data
+
+      var html = '<div class="card">';
+      html += '<div class="card-header">Star Information</div>';
+      html += '<div class="card-body">';
+      html += '<p><strong>Name:</strong> ' + (star.name || 'N/A') + '</p>';
+      html += '<p><strong>Constellation:</strong> ' + (star.constellation || 'N/A') + '</p>';
+      html += '<p><strong>Right Ascension:</strong> ' + (star.right_ascension || 'N/A') + '</p>';
+      html += '<p><strong>Declination:</strong> ' + (star.declination || 'N/A') + '</p>';
+      html += '<p><strong>Apparent Magnitude:</strong> ' + (star.apparent_magnitude || 'N/A') + '</p>';
+      html += '<p><strong>Absolute Magnitude:</strong> ' + (star.absolute_magnitude || 'N/A') + '</p>';
+      html += '<p><strong>Distance:</strong> ' + (star.distance_light_year ? star.distance_light_year + ' light years' : 'N/A') + '</p>';
+      html += '<p><strong>Spectral Class:</strong> ' + (star.spectral_class || 'N/A') + '</p>';
+      // Add more information as needed
+      html += '</div></div>';
+      starInfoDiv.innerHTML += html;
+    }
+
+    function displayError(errorMessage) {
+      document.getElementById('starInfo').innerHTML = '<div class="alert alert-danger" role="alert">' + errorMessage + '</div>';
+    }
+  </script>
+</body>
+</html>
